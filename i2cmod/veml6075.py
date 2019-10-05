@@ -3,7 +3,6 @@
 
 """
 Vishay VEML6075: UV-A/B light sensor.
-
 """
 
 import time

@@ -8,7 +8,7 @@ Drives SHT30, SHT31 and SHT35 humidity and temperature sensors.
 Sensirion `SHT3x Datasheets <https://www.sensirion.com/en/environmental-sensors/humidity-sensors/humidity-temperature-sensor-sht3x-digital-i2c-accurate/>`
 """
 
-from i2cmod import SHT2X
+from i2cmod import SHT3X
 
 def example():
     with SHT3X() as sensor:

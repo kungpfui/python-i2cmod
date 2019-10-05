@@ -12,7 +12,7 @@ from i2cmod import SHT2X
 
 def example():
     with SHT2X() as sensor:
-        print("Identification: 0x{:016X}".format(sensor.serial_number))
+        print("Identification:      0x{:016X}".format(sensor.serial_number))
 
         for adc_res, reg_value in (
                 ('12/14', 0x02),
@@ -21,11 +21,11 @@ def example():
                 ('11/11', 0x83)):
             sensor.user_register = reg_value
             print("-" * 79)
-            print("Resolution:     {}-bit (rh/T)".format(adc_res))
-            print("Temperature:    {:.2f} C".format(sensor.centigrade))
-            print("Temperature:    {:.2f} F".format(sensor.fahrenheit))
-            print("Humidity:       {:.2f} % ".format(sensor.humidity))
-            print("User Register:  0x{:02X}".format(sensor.user_register))
+            print("Resolution:          {}-bit (rh/T)".format(adc_res))
+            print("Temperature:         {:.2f} °C".format(sensor.centigrade))
+            print("Temperature:         {:.2f} °F".format(sensor.fahrenheit))
+            print("Relative Humidity:   {:.2f} % ".format(sensor.humidity))
+            print("User Register:       0x{:02X}".format(sensor.user_register))
 
 
 if __name__ == '__main__':

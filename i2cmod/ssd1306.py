@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# $Id: ssd1306.py 369 2018-09-23 08:28:16Z stefan $
 
 """
 SSD1306 OLED display controller
-
 """
 
 import time

@@ -15,6 +15,7 @@ import logging
 import unittest
 from typing import Union, ByteString, Optional
 from smbus2 import SMBus, i2c_msg
+from .crc import CRC8
 
 
 _log = logging.getLogger(__name__)
@@ -37,12 +38,12 @@ class SHT2X(SMBus):
         :param device_addr: I2C device address, normally 0x40
         """
         SMBus.__init__(self, bus, force=True)
-        self.crc8 = SHT2X.crc8_msbf_math  # CRC method to use
+        self.crc8 = lambda data: CRC8.msbf_math_x131(data, 0)    # CRC method to use
 
         self.device_addr = device_addr
         self._configure()
 
-    def i2c_read_write(self, write: Union[int, ByteString], read: int = 0, rdelay: Optional[float] = None) -> Union[ByteString, int]:
+    def i2c_read_write(self, write: Union[int, ByteString], read: int = 0, rdelay: Optional[float] = None) -> Union[int, ByteString]:
         """ Generic I2C read/write operation.
 
         :param write: stream to send
@@ -151,117 +152,4 @@ class SHT2X(SMBus):
 
         if crc_result:
             return struct.unpack('>Q', sn_1[3:5] + sn_0[0:8:2] + sn_1[0:2])[0]
-
-    @staticmethod
-    def crc8_msbf_bitwise(data: ByteString, crc: int = 0, polynom: int = 0x131) -> int:
-        """Calculates CRC checksum of data
-
-        It's CRC8 most-significant-bit-first calculation.
-        When `data` is inclusive CRC the result is 0. That's CRC magic.
-
-        :param data: data bytes
-        :param crc: inital crc value, normally 0
-        :param polynom: polynom to use, normally 0x131 = x^8 + x^5 + x^4 + 1
-        :return: CRC value.
-        """
-        for d in data:
-            crc ^= d
-
-            for bit in range(8):
-                crc <<= 1
-                if crc & 0x100:
-                    crc ^= polynom
-
-        return crc
-
-    @staticmethod
-    def crc8_msbf_math(data: ByteString, crc: int = 0) -> int:
-        """Calculates CRC checksum of data with Polynom x^8 + x^5 + x^4 + 1
-
-        It's CRC8 most-significant-bit-first calculation with optimized mathematics.
-        It's inlined and normally ~3x faster than :method:`crc8_msbf_bitwise`
-
-        :param data: data bytes
-        :param crc: inital crc value, normally 0
-        :return: CRC value
-        """
-        for d in data:
-            crc ^= d
-            crc ^= ((crc >> 3) ^ (crc >> 4) ^ (crc >> 6))
-            crc ^= ((crc << 4) ^ (crc << 5)) & 0xFF
-        return crc
-
-
-def example():
-    """Output data to screen"""
-
-    with SHT2X() as sensor:
-        print("Identification: 0x{:016X}".format(sensor.serial_number))
-
-        for adc_res, reg_value in (
-                ('12/14', 0x02),
-                (' 8/10', 0x03),
-                ('10/13', 0x82),
-                ('11/11', 0x83)):
-            sensor.user_register = reg_value
-            print("-" * 79)
-            print("Resolution:     {}-bit (rh/T)".format(adc_res))
-            print("Temperature:    {:.2f} C".format(sensor.centigrade))
-            print("Humidity:       {:.2f} % ".format(sensor.humidity))
-            print("User Register:  0x{:02X}".format(sensor.user_register))
-
-
-
-class TestSHT2XMethods(unittest.TestCase):
-    """Very basic unittest"""
-    def setUp(self):
-        logging.basicConfig(level=logging.INFO)
-
-    def test_crc(self):
-        """Check all possible 2-byte streams."""
-        for i in range(1<<16):
-            input = struct.pack('>H', i)
-
-            crc_bitwise = SHT2X.crc8_msbf_bitwise(input)
-            crc_math = SHT2X.crc8_msbf_math(input)
-            self.assertEqual(crc_bitwise, crc_math)
-
-            # check CRC `zero` magic as well
-            self.assertEqual(SHT2X.crc8_msbf_bitwise(bytes((crc_bitwise,)), crc_bitwise), 0)
-            self.assertEqual(SHT2X.crc8_msbf_math(bytes((crc_math,)), crc_math), 0)
-
-    def test_crc_performance(self):
-        """A CRC performance test. Bitwise is slower by factor ~3."""
-        crc_result_target = 123
-
-        t0 = time.time()
-        result = 0
-        for i in range(5000):
-            result = SHT2X.crc8_msbf_math(bytes(range(256)), result)
-        self.assertEqual(result, crc_result_target)
-        tproc_math = time.time() - t0
-        _log.info("crc8_msbf_math(): {:.3f}s".format(tproc_math))
-
-        t0 = time.time()
-        result = 0
-        for i in range(5000):
-            result = SHT2X.crc8_msbf_bitwise(bytes(range(256)), result)
-        self.assertEqual(result, crc_result_target)
-        tproc_bitwise = time.time() - t0
-        _log.info("crc8_msbf_bitwise(): {:.3f}s".format(tproc_bitwise))
-
-        # well, result depence on cpu utilisation. No that good ... but
-        self.assertLess(tproc_math, tproc_bitwise)
-
-
-if __name__ == '__main__':
-    example()
-
-    # because I forget it sometimes
-    # run the example
-    # >python3 -m module.sht2x
-
-    # run the unittest
-    # >python3 -m unittest module.sht2x
-
 

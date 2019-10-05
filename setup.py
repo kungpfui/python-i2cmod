@@ -20,7 +20,7 @@ setup(name=_package,
     license='MIT',
 
     install_requires = [
-        'smbus2',
+        'smbus2>=0.3.0',
         ],
 
     packages=[_package],

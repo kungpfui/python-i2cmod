@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# $Id: bmp280.py 372 2018-11-04 09:31:50Z stefan $
 
 """
 Bosch Sensortec BMP280 pressure and temperature sensor.
@@ -75,7 +73,7 @@ class BMP280(SMBus):
     def modify_register(self,
                         register: int,
                         set_msk: Union[Iterable, int],
-                        clr_msk: Optional[Iterable, int] = None) -> Optional[int]:
+                        clr_msk: Optional[Union[Iterable, int]] = None) -> Optional[int]:
         """read, modify and conditionally write to I2C register(s)
 
         :param register:  register address/command
@@ -101,8 +99,10 @@ class BMP280(SMBus):
         self.write_i2c_block_data(self.device_addr, register, value)
         return len(value)
 
-    def _configure(self):
-        """Setup sensor IC."""
+    def _configure(self) -> bool:
+        """Setup sensor IC.
+        :return: true if any register has been modified else false.
+        """
         # read temperature and pressure compensation data
         coeff = self.read_register(Reg.calibration, '<H2hH8h')
         # scale these coefficients already here. The later calculation in :method:update looks much more simple
@@ -112,22 +112,21 @@ class BMP280(SMBus):
         self.T = scaled_coeff[:3]
         self.P = scaled_coeff[3:]
 
-        # select configuration register
-        # 0xA0: standby time = 1000 ms
+        # select configuration register: standby time = 1000 ms
         modified = self.modify_register(Reg.config, (5 << 5) | (2 << 2) | (0 << 0))
 
-        # select control measurement register
-        # 0x27: pressure/temperature oversampling rate = 1, normal mode
+        # select control measurement register:  pressure/temperature oversampling rate = 1, normal mode
         modified = self.modify_register(Reg.control, (1 << 5) | (3 << 2) | (3 << 0)) or modified
         return modified
 
     @property
-    def altitude(self):
-        """Altitude as meters."""
+    def altitude(self) -> float:
+        """Altitude in meters."""
         return self._altitude
 
     @altitude.setter
-    def altitude(self, altitude):
+    def altitude(self, altitude: float):
+        """Altitude in meters."""
         self._altitude = altitude
 
         assert altitude < 11000.0
@@ -180,8 +179,10 @@ class BMP280(SMBus):
         """Update ADC values and calculates the new values for
         - temperature
         - pressure
+
+        :return: None
         """
-        # read ADC values, presure and temperature at the same time
+        # read ADC values, pressure and temperature at the same time
         data = self.read_register(Reg.pressure, 6)
 
         # convert pressure and temperature data to 20 bits

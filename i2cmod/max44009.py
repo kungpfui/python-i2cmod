@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# $Id: max44009.py 347 2018-08-12 14:28:16Z Stefan $
 
 """
 Maxim Integrated MAX44009 ambient light sensor I2C driver.
@@ -20,7 +18,6 @@ from smbus2 import SMBus, i2c_msg
 
 
 _LOG = logging.getLogger(__name__)
-
 
 class Reg(enum.IntEnum):
     """MAX44009 registers."""

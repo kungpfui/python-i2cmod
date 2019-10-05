@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# $Id: bme280.py 372 2018-11-04 09:31:50Z stefan $
 
 """
 Bosch Sensortec BME280 pressure, temperature and humidity sensor.
@@ -32,13 +30,16 @@ class BME280(BMP280):
 
         :param bus: I2C bus identification number or a filesystem name like `/dev/i2c-something`
         :param device_addr: I2C address 0x76 or 0x77
-        :param altitude:  altitude as meters above sea level
+        :param altitude:  altitude in meters above sea level
         """
         BMP280.__init__(self, bus, device_addr, altitude)
         self._humidity = None
 
     def _configure(self):
-        """Override BMP280's :meth:_configuration"""
+        """Override BMP280's :meth:_configuration
+
+        :return: true if any register has been modified else false.
+        """
         # read out the calibration coefficients
         coeff_h = [self.read_register(Reg.calibration25, '<B')] \
             + list(self.read_register(Reg.calibration26, '<hB3BB'))
