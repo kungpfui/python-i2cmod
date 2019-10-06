@@ -45,6 +45,8 @@ class Cmd(object):
 
 class SHT3X(SMBus):
     """humidity-temperature sensors SHT30, SHT31 and SHT35."""
+    crc8 = lambda data: CRC8.msbf_math_x131(data, 0xFF)  # CRC method to use
+
     def __init__(self, bus: Union[int, str] = 1, device_addr: int = 0x44) -> None:
         """Initialize
 
@@ -52,7 +54,6 @@ class SHT3X(SMBus):
         :param device_addr: I2C device address, normally 0x44
         """
         SMBus.__init__(self, bus, force=True)
-        self.crc8 = lambda data: CRC8.msbf_math_x131(data, 0xFF)    # CRC method to use
 
         self._temperature = None
         self._humidity = None
@@ -153,3 +154,14 @@ class SHT3X(SMBus):
     def status_clear(self) -> None:
         """Clear all status flags."""
         self.i2c_read_write(Cmd.clear_status)
+
+
+class TestMethods(unittest.TestCase):
+    """Very basic unittest"""
+    def setUp(self):
+        logging.basicConfig(level=logging.INFO)
+
+    def test_crc_sht3x_datasheet(self):
+        """SHT3x datasheet examples"""
+        self.assertEqual(SHT3X.crc8(b'\xBE\xEF'), 0x92)
+        self.assertEqual(SHT3X.crc8(b'\xBE\xEF\x92'), 0)

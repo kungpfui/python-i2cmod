@@ -31,6 +31,8 @@ class Reg(enum.IntEnum):
 
 class SHT2X(SMBus):
     """humidity-temperature sensors SHT20, SHT21 and SHT25."""
+    crc8 = lambda data: CRC8.msbf_math_x131(data, 0)  # CRC method to use
+
     def __init__(self, bus: Union[int, str] = 1, device_addr: int = 0x40) -> None:
         """Initialize
 
@@ -38,7 +40,6 @@ class SHT2X(SMBus):
         :param device_addr: I2C device address, normally 0x40
         """
         SMBus.__init__(self, bus, force=True)
-        self.crc8 = lambda data: CRC8.msbf_math_x131(data, 0)    # CRC method to use
 
         self.device_addr = device_addr
         self._configure()

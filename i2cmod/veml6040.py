@@ -29,6 +29,8 @@ class VEML6040(SMBus):
     # auto-ranging: underflow with some margin. 80% of half value
     underflow = (1 << 15) * 4 // 5
 
+    MAX_IT = 5  # max integration time
+
     def __init__(self, bus: Union[int, str] = 1, device_addr: int = 0x10) -> None:
         """Initialize Object.
 
@@ -55,7 +57,7 @@ class VEML6040(SMBus):
         return SMBus.write_word_data(self, self.device_addr, *args, **kwargs)
 
     def update(self):
-        """update RGBW values and adjust the integration time as needed"""
+        """measures and update RGBW values and adjust the integration time as needed."""
         _dir = 0
 
         while True:
@@ -79,7 +81,7 @@ class VEML6040(SMBus):
 
             # underflow?
             elif dir != -1 and max(self.rgbw) < self.underflow:
-                if self._integration_time < 5:
+                if self._integration_time < self.MAX_IT:
                     _LOG.debug('Underflow occurred')
                     _dir = 1
                     continue
@@ -90,8 +92,8 @@ class VEML6040(SMBus):
         integration_time = (self.control >> 4) & 0x7
 
         if self._integration_time is None:
-            self._integration_time = min(5, integration_time)
-        assert 0 <= self._integration_time <= 5
+            self._integration_time = min(self.MAX_IT, integration_time)
+        assert 0 <= self._integration_time <= self.MAX_IT
 
         if self._integration_time != integration_time:
             # configure control register
@@ -163,7 +165,7 @@ class VEML6040(SMBus):
         """ color temperature
 
         :param location: either 'indoor' or 'outdoor'
-        :return: Indoor color temperature as Kelvin.
+        :return: Color temperature in Kelvin.
         """
         XYZ = self._XYZ(location)
         try:
@@ -185,12 +187,12 @@ def example():
     # Output data to screen
     with VEML6040() as rgbw_sensor:
         rgbw_sensor.update()
-        print('red   : {}'.format(rgbw_sensor.red))
-        print('green : {}'.format(rgbw_sensor.green))
-        print('blue  : {}'.format(rgbw_sensor.blue))
-        print('white : {}'.format(rgbw_sensor.white))
+        print('red         : {}'.format(rgbw_sensor.red))
+        print('green       : {}'.format(rgbw_sensor.green))
+        print('blue        : {}'.format(rgbw_sensor.blue))
+        print('white       : {}'.format(rgbw_sensor.white))
 
-        print('luminance : {:.2f} lux'.format(rgbw_sensor.luminance))
+        print('luminance   : {:.2f} lux'.format(rgbw_sensor.luminance))
         print('temperature : {} K'.format(int(rgbw_sensor.temperature)))
 
 

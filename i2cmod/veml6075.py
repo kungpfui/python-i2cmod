@@ -181,7 +181,7 @@ class VEML6075(SMBus):
 def example():
     # Output data to screen
     with VEML6075() as uv_sensor:
-        print ('ID    : {:04X}'.format(uv_sensor.id))
+        print ('ID      : {:04X}'.format(uv_sensor.id))
 
         uv_sensor.update()
         print ('UV-A    : {}'.format(uv_sensor.uva))

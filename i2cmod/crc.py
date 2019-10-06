@@ -58,11 +58,6 @@ class TestMethods(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(level=logging.INFO)
 
-    def test_crc_sht3x_datasheet(self):
-        """SHT3x datasheet example"""
-        self.assertEqual(CRC8.msbf_bitwise(b'\xBE\xEF', 0xFF), 0x92)
-        self.assertEqual(CRC8.msbf_bitwise(b'\xBE\xEF\x92', 0xFF), 0)
-
     def test_crc(self):
         for crc_init in (0, 0xff):
             """Check all possible 2-byte streams."""

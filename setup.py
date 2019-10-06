@@ -6,6 +6,8 @@ from setuptools.command.install import install as _install
 
 _package = 'i2cmod'
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 LONG_DESCRIPTION = """
 """
@@ -19,10 +21,11 @@ setup(name=_package,
     long_description=LONG_DESCRIPTION,
     license='MIT',
 
-    install_requires = [
-        'smbus2>=0.3.0',
-        ],
+    install_requires = requirements,
 
-    packages=[_package],
+    packages=[
+        _package,
+    ],
+    data_files = [ ("i2cmod/fonts", ['i2cmod/fonts/isocpeur.ttf',]) ],
 
     )
